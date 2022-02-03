@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
-let items = ["Buy food", "Cook a dish", "Have a meal"];
+let items = [];
+let workItems = [];
 
 app.use(express.urlencoded({ extended: true }))
 //Static files are files that clients download as they are from the server. 
@@ -21,7 +22,11 @@ app.get("/", function(req, res){
 
     let day = today.toLocaleDateString("en-US", options);
 
-    res.render("list", {kindofDay: day, newListItem: items});
+    res.render("list", {listTittle: day, newListItem: items, route: "/"});
+});
+
+app.get("/work", function(req, res){
+    res.render("list", {listTittle: "Work List", newListItem: workItems, route: "/work"});
 });
 
 app.post("/", function(req, res){
@@ -31,6 +36,15 @@ app.post("/", function(req, res){
 
     res.redirect("/");
 });
+
+app.post("/work", function(req, res){
+    let item = req.body.newItem;
+    
+    workItems.push(item);
+
+    res.redirect("/work");
+});
+
 
 app.listen(3000, function(){
     console.log("Server started on por 3000")
