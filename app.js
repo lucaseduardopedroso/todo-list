@@ -1,25 +1,31 @@
 const express = require("express");
 const app = express();
-var items = ["Buy food", "Cook a dish", "Have a meal"];
+let items = ["Buy food", "Cook a dish", "Have a meal"];
+
 app.use(express.urlencoded({ extended: true }))
+//Static files are files that clients download as they are from the server. 
+//Create a new directory, public. Express, by default does not allow you to serve static files.
+//You need to enable it using the following built-in middleware:
+app.use(express.static("public"));
+
 app.set('view engine', 'ejs');
 
 app.get("/", function(req, res){
-    var today = new Date();
+    let today = new Date();
     
-    var options = {
+    let options = {
         weekday: "long",
         day: "numeric",
         month: "long"
     };
 
-    var day = today.toLocaleDateString("en-US", options);
+    let day = today.toLocaleDateString("en-US", options);
 
     res.render("list", {kindofDay: day, newListItem: items});
 });
 
 app.post("/", function(req, res){
-    var item = req.body.newItem;
+    let item = req.body.newItem;
     
     items.push(item);
 
