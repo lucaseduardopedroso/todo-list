@@ -12,7 +12,7 @@ app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
 //Connect to MongoDB w/ Mongoose
-mongoose.connect("mongodb://localhost:27017/todolistDB");
+mongoose.connect("mongodb+srv://admin-luke:test123@cluster0.gbas0.mongodb.net/todolistDB");
 
 //Create a schema
 const itemsSchema = new mongoose.Schema ({
@@ -139,6 +139,12 @@ app.post("/delete", function(req, res){
 });
 
 //Start the server
-app.listen(3000, function(){
+
+let port = process.env.PORT;
+if (port == null || port == ""){
+    port = 3000;
+}
+
+app.listen(port, function(){
     console.log("Server started on por 3000")
 });
