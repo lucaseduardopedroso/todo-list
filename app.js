@@ -1,8 +1,7 @@
 const express = require("express");
-const date = require(__dirname + "/date.js");
 const app = express();
-let items = [];
-let workItems = [];
+const mongoose = require("mongoose");
+const _ = require("lodash");
 
 app.use(express.urlencoded({ extended: true }))
 //Static files are files that clients download as they are from the server. 
@@ -12,32 +11,134 @@ app.use(express.static("public"));
 
 app.set('view engine', 'ejs');
 
+//Connect to MongoDB w/ Mongoose
+mongoose.connect("mongodb://localhost:27017/todolistDB");
+
+//Create a schema
+const itemsSchema = new mongoose.Schema ({
+    name: {
+        type: String,
+    }
+})
+
+//Create a model
+const Item = mongoose.model("Item", itemsSchema)
+
+//Create some default documents
+const item1 = new Item ({
+    name: "Welcome to your todolist!"
+})
+
+const item2 = new Item ({
+    name: "Hit the '+' button to add a new item."
+})
+
+const item3 = new Item ({
+    name: "← Hit this to delete an item."
+})
+
+const defaultItems = [item1, item2, item3];
+
+const listSchema = {
+    name: String,
+    items: [itemsSchema]
+}
+
+const List = mongoose.model("List", listSchema);
+
+//Create/access the main list
 app.get("/", function(req, res){
-    let day = date.getDate();
-    res.render("list", {listTittle: day, newListItem: items, route: "/"});
+    //Find and print all documents
+    Item.find({}, function(err, foundItems){
+        if(foundItems.length === 0){
+            //Insert all default documents into a collection
+            Item.insertMany(defaultItems, function(err){
+                if(err){
+                    console.log(err);
+                } else {
+                    console.log("Successfully saved all documents.");
+                }
+            })
+            res.redirect("/");
+        } else {
+            res.render("list", {listTitle: "Today", newListItems: foundItems});
+        }
+    })
 });
 
-app.get("/work", function(req, res){
-    res.render("list", {listTittle: "Work List", newListItem: workItems, route: "/work"});
-});
+//Create/access custom lists
+app.get("/:customListName", function(req, res){
+    const customListName = _.capitalize(req.params.customListName);
 
+    List.findOne({name: customListName}, function(err, foundList){
+        if(!err){
+            if(!foundList){
+                //Create a new list
+                const list = new List({
+                    name: customListName,
+                    items: defaultItems
+                })
+                list.save();
+                res.redirect("/" + customListName);
+            } else {
+                //Show an existing list
+                res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
+            }
+        }
+    })
+})
+
+//Add content to the main todo list
 app.post("/", function(req, res){
-    let item = req.body.newItem;
-    
-    items.push(item);
 
-    res.redirect("/");
+    const itemName = req.body.newItem;
+    const listName = req.body.list;
+  
+    const item = new Item({
+      name: itemName
+    });
+  
+    if (listName === "Today"){
+      item.save();
+      res.redirect("/");
+    } else {
+      List.findOne({name: listName}, function(err, foundList){
+        foundList.items.push(item);
+        foundList.save();
+        res.redirect("/" + listName);
+      });
+    }
+  });
+
+//Delete content from the main todo list
+app.post("/delete", function(req, res){
+   const checkedItemId = req.body.checkbox;
+   const listName = req.body.listName;
+
+   if(listName === "Today"){
+   Item.findByIdAndRemove(checkedItemId, function(err){
+       if(err){
+           console.log(err);
+       } else {
+           console.log("Successfully deleted the document.");
+       }
+   })
+
+   res.redirect("/");
+   } else {
+       List.findOneAndUpdate(
+           {name: listName},
+           {$pull: {items: {_id: checkedItemId}}},
+           function(err, foundList){
+               if(!err){
+                   res.redirect("/" + listName);
+               }
+           }
+       )
+   }
 });
 
-app.post("/work", function(req, res){
-    let item = req.body.newItem;
-    
-    workItems.push(item);
-
-    res.redirect("/work");
-});
-
-
+//Start the server
 app.listen(3000, function(){
     console.log("Server started on por 3000")
 });
