@@ -3,7 +3,7 @@ const app = express();
 const mongoose = require("mongoose");
 const _ = require("lodash");
 
-app.use(express.urlencoded({ extended: true }))
+app.use(express.urlencoded({ extended: true }));
 //Static files are files that clients download as they are from the server. 
 //Create a new directory, public. Express, by default does not allow you to serve static files.
 //You need to enable it using the following built-in middleware:
@@ -12,30 +12,30 @@ app.use(express.static("public"));
 app.set('view engine', 'ejs');
 
 //Connect to MongoDB w/ Mongoose
-mongoose.connect("mongodb+srv://admin-luke:test123@cluster0.gbas0.mongodb.net/todolistDB");
+mongoose.connect("mongodb+srv://<user>:<password>@cluster0.gbas0.mongodb.net/todolistDB");
 
 //Create a schema
 const itemsSchema = new mongoose.Schema ({
     name: {
         type: String,
     }
-})
+});
 
 //Create a model
-const Item = mongoose.model("Item", itemsSchema)
+const Item = mongoose.model("Item", itemsSchema);
 
 //Create some default documents
 const item1 = new Item ({
     name: "Welcome to your todolist!"
-})
+});
 
 const item2 = new Item ({
     name: "Hit the '+' button to add a new item."
-})
+});
 
 const item3 = new Item ({
     name: "← Hit this to delete an item."
-})
+});
 
 const defaultItems = [item1, item2, item3];
 
@@ -63,7 +63,7 @@ app.get("/", function(req, res){
         } else {
             res.render("list", {listTitle: "Today", newListItems: foundItems});
         }
-    })
+    });
 });
 
 //Create/access custom lists
@@ -77,7 +77,7 @@ app.get("/:customListName", function(req, res){
                 const list = new List({
                     name: customListName,
                     items: defaultItems
-                })
+                });
                 list.save();
                 res.redirect("/" + customListName);
             } else {
@@ -85,8 +85,8 @@ app.get("/:customListName", function(req, res){
                 res.render("list", {listTitle: foundList.name, newListItems: foundList.items});
             }
         }
-    })
-})
+    });
+});
 
 //Add content to the main todo list
 app.post("/", function(req, res){
@@ -122,7 +122,7 @@ app.post("/delete", function(req, res){
        } else {
            console.log("Successfully deleted the document.");
        }
-   })
+   });
 
    res.redirect("/");
    } else {
@@ -134,7 +134,7 @@ app.post("/delete", function(req, res){
                    res.redirect("/" + listName);
                }
            }
-       )
+       );
    }
 });
 
